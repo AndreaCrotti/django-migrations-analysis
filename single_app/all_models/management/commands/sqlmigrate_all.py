@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import datetime
 import sys
 
 from django.core.management.base import BaseCommand
@@ -14,7 +15,9 @@ CREATE TABLE "django_migrations"
 
 
 def insert_dj_migrations(index, app, name):
-    return "\nINSERT INTO django_migrations VALUES (%d, '%s', '%s', NOW()); \n" % (index, app, name)
+    now = datetime.datetime.utcnow().isoformat()
+    # TODO: support multiple databases
+    return "\nINSERT INTO django_migrations VALUES (%d, '%s', '%s', '%s'); \n" % (index, app, name, now)
 
 
 class Command(BaseCommand):
