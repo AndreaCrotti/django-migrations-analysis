@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import contextlib
 import datetime
 import sys
 
@@ -30,8 +31,7 @@ class Command(BaseCommand):
                             help='Nominates a database to create SQL for. Defaults to the '
                             '"default" database.')
 
-        parser.add_argument('output',
-                            default=sys.stdout,
+        parser.add_argument('-o', '--output',
                             help='Where to write the SQL result file.')
 
     def execute(self, *args, **options):
@@ -55,9 +55,15 @@ class Command(BaseCommand):
         migrated = set()
 
         django_migrations_id = 0
-        with open(options['output'], 'w') as out:
-            out.write('BEGIN;\n')
-            out.write(DJANGO_MIGRATIONS)
+        if options['output'] is None:
+            output_fn = sys.stdout
+        else:
+            output_fn = open(options['output'], 'w')
+
+        with contextlib.closing(output_fn):
+            # with open(options['output'], 'w') as out:
+            output_fn.write('BEGIN;\n')
+            output_fn.write(DJANGO_MIGRATIONS)
 
             for rn in loader_graph.root_nodes():
                 rn_obj = loader_graph.node_map[rn]
@@ -67,10 +73,9 @@ class Command(BaseCommand):
                     key = node.key
 
                     if key not in migrated:
-                        print("Adding migration for {}".format(node))
                         plan = [(executor.loader.graph.nodes[node.key], False)]
-                        out.write('\n'.join(executor.collect_sql(plan)))
-                        out.write(insert_dj_migrations(django_migrations_id, node.key[0], node.key[1]))
+                        output_fn.write('\n'.join(executor.collect_sql(plan)))
+                        output_fn.write(insert_dj_migrations(django_migrations_id, node.key[0], node.key[1]))
                         migrated.add(key)
 
-            out.write('\nCOMMIT;')
+            output_fn.write('\nCOMMIT;')
