@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+NAME=$1
+
 ./manage.py migrate all_models zero
 
-profile_python.py manage.py migrate
+time profile_python.py $NAME manage.py migrate
