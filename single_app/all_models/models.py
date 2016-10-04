@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 
 class ModelWithForeignKeyToUser0(models.Model):
     user = models.ForeignKey(User)
-    value = models.IntegerField(default=0)
-
+    # value = models.IntegerField(default=0)
+ 
 class ModelWithForeignKeyToUser1(models.Model):
     user = models.ForeignKey(User)
     value = models.IntegerField(default=0)
