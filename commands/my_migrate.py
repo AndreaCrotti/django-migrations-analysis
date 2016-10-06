@@ -4,7 +4,6 @@ from collections import defaultdict
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import migrations, connection
-from django.db.migrations.operations.base import Operation
 from django.test.utils import CaptureQueriesContext
 
 BY_APP = defaultdict(int)
@@ -30,13 +29,9 @@ class MyRunPython(migrations.RunPython):
 
 
 class Command(BaseCommand):
-    help = "Prints the SQL statements for the named migration."
+    help = "Generate SQL files from all the migrations involving RunPython"
 
-    output_transaction = True
-
-    # @mock.patch('django.db.migrations.RunSQL', new=MyRunPython)
     @mock.patch('django.db.migrations.RunPython', new=MyRunPython)
-    # @mock.patch('django.db.migrations.CreateModel', new=MyRunPython)
     def handle(self, *args, **options):
         # do some monkey patching 
         call_command('migrate')
