@@ -45,3 +45,15 @@ https://groups.google.com/forum/#!msg/django-users/V8Ei2qZJ8VI/bFUeY2wTAQAJ;cont
       File "/home/andrea/code/django-faster-migration/django/db/backends/sqlite3/schema.py", line 80, in _remake_table
         body = {f.name: f for f in model._meta.local_concrete_fields}
     AttributeError: 'ModelStateOptions' object has no attribute 'local_concrete_fields'
+
+
+## Usage
+
+Running migrations has to be done in different steps:
+
+- *dump_run_python* runs a full migration on an empty database, generating SQL files from migrations that are using RunPython
+- *make_raw_migration*: same as make_migrations but creates python module migration and corresponding SQL file, it *does not* actually support RunPython calls
+- *migrate_raw*:
+     same as migrate but uses the SQL files, so bypassing completely everything all the Python loading.
+     follows the same order
+  
