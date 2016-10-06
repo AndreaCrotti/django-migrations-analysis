@@ -52,7 +52,10 @@ https://groups.google.com/forum/#!msg/django-users/V8Ei2qZJ8VI/bFUeY2wTAQAJ;cont
 Running migrations has to be done in different steps:
 
 - *dump_run_python* runs a full migration on an empty database, generating SQL files from migrations that are using RunPython
-- *make_raw_migration*: same as make_migrations but creates python module migration and corresponding SQL file, it *does not* actually support RunPython calls
+- *make_raw_migration*:
+    same as make_migrations but creates python module migration and corresponding SQL file, it *does not* actually support RunPython calls
+    Can be run on both an empty and a non empty databae, but will fail loudly on an existing database with new RunPython code.
+
 - *migrate_raw*:
      same as migrate but uses the SQL files, so bypassing completely everything all the Python loading.
      follows the same order

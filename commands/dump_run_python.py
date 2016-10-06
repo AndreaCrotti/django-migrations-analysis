@@ -1,5 +1,5 @@
 import mock
-from collections import defaultdict
+import inspect
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
@@ -7,8 +7,7 @@ from django.db import migrations, connection, DEFAULT_DB_ALIAS
 from django.db.utils import OperationalError
 from django.test.utils import CaptureQueriesContext
 
-# TODO: this should be instead matching the executed migration
-BY_APP = defaultdict(int)
+CREATED_FILES = set()
 
 
 def is_not_migrated(connection):
@@ -23,20 +22,28 @@ def is_not_migrated(connection):
 
 
 class MyRunPython(migrations.RunPython):
+    @property
+    def output_fname(self):
+        module = inspect.getmodule(self.code)
+        return '{}.sql'.format(module.__name__.replace('.', '/'))
+
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         with CaptureQueriesContext(connection) as queries:
             go_forward = super(MyRunPython, self).database_forwards(
                 app_label, schema_editor, from_state, to_state)
 
         captured = [q['sql'].encode('utf-8') for q in queries.captured_queries]
+
         if len(captured) > 0:
             lines = ["BEGIN"] + captured + ["COMMIT"]
-            fname = "{}_{}_{}.sql".format(type(self).__name__, app_label, BY_APP['label'])
-            with open(fname, 'w') as out:
+            out_path = self.output_fname
+            assert out_path not in CREATED_FILES, "Two RunPython operations from the same file??"
+
+            with open(out_path, 'w') as out:
                 for line in lines:
                     out.write("{};\n".format(line))
 
-            BY_APP[app_label] += 1
+            CREATED_FILES.add(out_path)
 
         return go_forward
 
@@ -45,7 +52,7 @@ class Command(BaseCommand):
     help = "Generate SQL files from all the migrations involving RunPython"
 
     def add_arguments(self, parser):
-        # TODO: take a database url to use instead of the usual
+        # TODO: take a database url to use instead of the usual hard coded settings?
         parser.add_argument(
             '--database', default=DEFAULT_DB_ALIAS,
             help='Nominates a database to create SQL for. Defaults to the "default" database.',
