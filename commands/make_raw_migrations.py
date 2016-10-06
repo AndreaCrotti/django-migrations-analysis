@@ -9,8 +9,6 @@ from django.db.migrations.loader import MigrationLoader
 
 OTHER_PATH = 'other_apps'
 
-# BASE_PATH = 'sql_migrations'
-
 # TODO: these two are needed for the other command that actually runs the migrations
 # TODO: is there a way to use the django-migrations table with a Model/
 # DJANGO_MIGRATIONS = """
@@ -25,6 +23,8 @@ OTHER_PATH = 'other_apps'
 
 
 def gen_path(key):
+    """Generate the path to the file to write out
+    """
     root, migration = key[0], key[1]
     if not path.isdir(root):
         right_path = path.join(OTHER_PATH, root)
@@ -35,6 +35,15 @@ def gen_path(key):
         right_path = '{}/migrations'.format(root)
 
     return '{}/{}.sql'.format(right_path, migration)
+
+
+def iterate_migrations(graph):
+    for rn in graph.root_nodes():
+        rn_obj = graph.node_map[rn]
+        line = graph.iterative_dfs(rn_obj)
+
+        for node in line:
+            yield node.key
 
 
 class Command(BaseCommand):
@@ -48,10 +57,6 @@ class Command(BaseCommand):
                             '"default" database.')
 
     def execute(self, *args, **options):
-        # sqlmigrate doesn't support coloring its output but we need to force
-
-        # no_color=True so that the BEGIN/COMMIT statements added by
-        # output_transaction don't get colored either.
         options['no_color'] = True
         return super(Command, self).execute(*args, **options)
 
@@ -67,24 +72,17 @@ class Command(BaseCommand):
 
         # Load up an executor to get all the migration data
         loader = MigrationLoader(None, ignore_no_migrations=True)
-        loader_graph = loader.graph
 
         migrated = set()
 
-        for rn in loader_graph.root_nodes():
-            rn_obj = loader_graph.node_map[rn]
-            line = loader_graph.iterative_dfs(rn_obj)
+        for key in iterate_migrations(loader.graph):
+            if key not in migrated:
+                plan = [(executor.loader.graph.nodes[key], False)]
+                statements = ['BEGIN;'] + executor.collect_sql(plan) + ['COMMIT;']
+                out_fname = gen_path(key)
+                print("Writing to {}".format(out_fname))
 
-            for node in line:
-                key = node.key
+                with open(out_fname, 'w') as out:
+                    out.writelines([s + '\n' for s in statements])
 
-                if key not in migrated:
-                    plan = [(executor.loader.graph.nodes[node.key], False)]
-                    statements = ['BEGIN;'] + executor.collect_sql(plan) + ['COMMIT;']
-                    out_fname = gen_path(key)
-                    print("Writing to {}".format(out_fname))
-
-                    with open(out_fname, 'w') as out:
-                        out.writelines([s + '\n' for s in statements])
-
-                    migrated.add(key)
+                migrated.add(key)
