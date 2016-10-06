@@ -10,3 +10,8 @@ https://groups.google.com/forum/#!msg/django-users/V8Ei2qZJ8VI/bFUeY2wTAQAJ;cont
 [3] https://github.com/django/django/commit/5aa55038ca9ac44b440b56d1fc4e79c876e51393 
 [4] https://code.djangoproject.com/ticket/24745 
 [5] https://github.com/MarkusH/django/commits/schemaeditor-modelstate 
+
+## Tasks
+
+- capture output from RunPython calls
+- see if it's feasible to not allow anymore to use RunPython

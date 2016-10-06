@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
+# TODO: do something to smartly capture everything 
+
 
 def add_initial_channel_groupings(apps, schema_editor):
     user = apps.get_model("auth", "User")
