@@ -80,12 +80,11 @@ class Command(BaseCommand):
 
                 if key not in migrated:
                     plan = [(executor.loader.graph.nodes[node.key], False)]
-                    statements = ['BEGIN'] + executor.collect_sql(plan) + ['COMMIT']
+                    statements = ['BEGIN;'] + executor.collect_sql(plan) + ['COMMIT;']
                     out_fname = gen_path(key)
                     print("Writing to {}".format(out_fname))
 
                     with open(out_fname, 'w') as out:
-                        for st in statements:
-                            out.write("{};\n".format(st))
+                        out.writelines([s + '\n' for s in statements])
 
                     migrated.add(key)
