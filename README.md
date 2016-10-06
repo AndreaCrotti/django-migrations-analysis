@@ -57,6 +57,5 @@ Running migrations has to be done in different steps:
     Can be run on both an empty and a non empty databae, but will fail loudly on an existing database with new RunPython code.
 
 - *migrate_raw*:
-     same as migrate but uses the SQL files, so bypassing completely everything all the Python loading.
-     follows the same order
-  
+     same as migrate but uses the SQL files, so bypassing completely everything all the Python loading, but using the same order to load the files
+     in, updating the django-migrations table accordingly.

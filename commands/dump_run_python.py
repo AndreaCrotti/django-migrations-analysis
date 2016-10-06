@@ -32,7 +32,7 @@ class MyRunPython(migrations.RunPython):
             go_forward = super(MyRunPython, self).database_forwards(
                 app_label, schema_editor, from_state, to_state)
 
-        captured = [q['sql'].encode('utf-8') for q in queries.captured_queries]
+        captured = [q['sql'] for q in queries.captured_queries]
 
         if len(captured) > 0:
             lines = ["BEGIN"] + captured + ["COMMIT"]
