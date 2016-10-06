@@ -1,24 +1,19 @@
 import mock
-import datetime
 
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
-
-# DJANGO_MIGRATIONS = """
-# CREATE TABLE "django_migrations"
-# ("id" integer, "app" varchar(255) NOT NULL, "name" varchar(255) NOT NULL, "applied" timestamp NOT NULL);
-# """
+from django.db import migrations, connection
+from django.test.utils import CaptureQueriesContext
 
 
-def my_runpython(forward, backward=None):
-    # TODO: capture the SQL and rollback the changes right after to avoid extra changes??
-    pass
+class MyRunPython(migrations.RunPython):
+    def database_forwards(self, *args, **kwargs):
+        with CaptureQueriesContext(connection) as queries:
+            go_forward = super(MyRunPython, self).database_forwards(*args, **kwargs)
 
-
-def insert_dj_migrations(index, app, name):
-    now = datetime.datetime.utcnow().isoformat()
-    # TODO: support multiple databases
-    return "\nINSERT INTO django_migrations VALUES (%d, '%s', '%s', '%s'); \n" % (index, app, name, now)
+        actual_sql = ";\n".join(q['sql'] for q in queries.captured_queries)
+        print(actual_sql)
+        return go_forward
 
 
 class Command(BaseCommand):
@@ -26,14 +21,7 @@ class Command(BaseCommand):
 
     output_transaction = True
 
-    # def add_arguments(self, parser):
-    #     parser.add_argument('--database', default=DEFAULT_DB_ALIAS,
-    #                         help='Nominates a database to create SQL for. Defaults to the '
-    #                         '"default" database.')
-
-    #     parser.add_argument('-o', '--output',
-    #                         help='Where to write the SQL result file.')
-
+    @mock.patch('django.db.migrations.RunPython', new=MyRunPython)
     def handle(self, *args, **options):
         # do some monkey patching 
         call_command('migrate')
