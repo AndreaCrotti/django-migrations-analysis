@@ -59,3 +59,6 @@ Running migrations has to be done in different steps:
 - *migrate_raw*:
      same as migrate but uses the SQL files, so bypassing completely everything all the Python loading, but using the same order to load the files
      in, updating the django-migrations table accordingly.
+
+Migrations of external apps (content_type/auth etc) shoudl actually still be done in the usual way.
+This simplifies a lot things since then everything else has migration files in the expected path.
