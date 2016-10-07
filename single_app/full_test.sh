@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# TODO: move this to the APP that actually contains the commands instead?
+# TODO: could use multiple databases instead of a single one?
+# TODO: django_database_url to pass different database settings
 DEFAULT_DB="db.sqlite3"
 
 echo "clean the db"
