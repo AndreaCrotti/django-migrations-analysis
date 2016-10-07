@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'all_models',
+    'django_migrate_fast',
 ]
 
 MIDDLEWARE_CLASSES = [
