@@ -1,23 +1,20 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-from os import path, mkdir
 
 from django.core.management.base import BaseCommand
 from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.migrations.loader import MigrationLoader
 
-from .common import gen_path, iterate_migrations
+from .common import gen_path, iterate_migrations, is_not_migrated
 
 
 OTHER_PATH = 'other_apps'
 
-# TODO: these two are needed for the other command that actually runs the migrations
-# TODO: is there a way to use the django-migrations table with a Model/
-# DJANGO_MIGRATIONS = """
-# CREATE TABLE "django_migrations"
-# ("id" integer, "app" varchar(255) NOT NULL, "name" varchar(255) NOT NULL, "applied" timestamp NOT NULL);
-# """
+DJANGO_MIGRATIONS = """
+CREATE TABLE "django_migrations"
+("id" integer, "app" varchar(255) NOT NULL, "name" varchar(255) NOT NULL, "applied" timestamp NOT NULL);
+"""
 
 
 def insert_dj_migrations(index, app, name):
@@ -31,6 +28,7 @@ def execute_sql(connection, sql):
         cursor.execute(sql)
         row = cursor.fetchone()
         print(row)
+        return row
 
 
 class Command(BaseCommand):
@@ -48,18 +46,20 @@ class Command(BaseCommand):
         return super(Command, self).execute(*args, **options)
 
     def handle(self, *args, **options):
-        if not path.isdir(OTHER_PATH):
-            mkdir(OTHER_PATH)
-
         # Get the database we're operating from
         connection = connections[options['database']]
+        assert is_not_migrated(connection), "Try on an empty database please"
 
         # Load up an executor to get all the migration data
         loader = MigrationLoader(None, ignore_no_migrations=True)
 
         migrated = set()
 
+        execute_sql(connection, DJANGO_MIGRATIONS)
+
         for key in iterate_migrations(loader.graph):
             if key not in migrated:
                 sql_file = gen_path(key)
-                execute_sql(connection, open(sql_file).read())
+                print("Loading file %s" % sql_file)
+                for line in open(sql_file):
+                    execute_sql(connection, line)
