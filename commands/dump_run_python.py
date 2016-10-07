@@ -4,21 +4,11 @@ import inspect
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import migrations, connection, DEFAULT_DB_ALIAS
-from django.db.utils import OperationalError
 from django.test.utils import CaptureQueriesContext
 
+from .common import is_not_migrated
+
 CREATED_FILES = set()
-
-
-def is_not_migrated(connection):
-    with connection.cursor() as cursor:
-        try:
-            cursor.execute("SELECT COUNT(*) FROM django_migrations;")
-            row = cursor.fetchone()
-        except OperationalError:
-            return True
-        else:
-            return row[0] == 0
 
 
 class MyRunPython(migrations.RunPython):

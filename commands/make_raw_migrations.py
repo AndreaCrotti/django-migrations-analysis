@@ -7,6 +7,8 @@ from django.db import DEFAULT_DB_ALIAS, connections
 from django.db.migrations.executor import MigrationExecutor
 from django.db.migrations.loader import MigrationLoader
 
+from .common import gen_path, iterate_migrations
+
 OTHER_PATH = 'other_apps'
 
 # TODO: these two are needed for the other command that actually runs the migrations
@@ -20,30 +22,6 @@ OTHER_PATH = 'other_apps'
 #     now = datetime.datetime.utcnow().isoformat()
 #     # TODO: support multiple databases
 #     return "\nINSERT INTO django_migrations VALUES (%d, '%s', '%s', '%s'); \n" % (index, app, name, now)
-
-
-def gen_path(key):
-    """Generate the path to the file to write out
-    """
-    root, migration = key[0], key[1]
-    if not path.isdir(root):
-        right_path = path.join(OTHER_PATH, root)
-        if not path.isdir(right_path):
-            mkdir(right_path)
-
-    else:
-        right_path = '{}/migrations'.format(root)
-
-    return '{}/{}.sql'.format(right_path, migration)
-
-
-def iterate_migrations(graph):
-    for rn in graph.root_nodes():
-        rn_obj = graph.node_map[rn]
-        line = graph.iterative_dfs(rn_obj)
-
-        for node in line:
-            yield node.key
 
 
 class Command(BaseCommand):
